@@ -37,6 +37,7 @@
 
     <modules>
         <module>time-series</module>
+        <module>eval-script</module>
     </modules>
 
 </project>

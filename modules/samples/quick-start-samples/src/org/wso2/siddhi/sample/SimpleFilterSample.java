@@ -15,41 +15,64 @@
 
 package org.wso2.siddhi.sample;
 
+import org.apache.log4j.Logger;
 import org.wso2.siddhi.core.SiddhiManager;
+import org.wso2.siddhi.core.config.SiddhiConfiguration;
 import org.wso2.siddhi.core.event.Event;
+import org.wso2.siddhi.core.exception.FunctionAlreadyExistException;
+import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
-import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
-import org.wso2.siddhi.query.compiler.exception.SiddhiParserException;
+import org.wso2.siddhi.extension.evalscript.exceptions.FunctionInitializationException;
+import org.wso2.siddhi.query.api.QueryFactory;
+import org.wso2.siddhi.query.api.definition.Attribute;
+
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sample demonstrating a simple filtering use-case
  */
 public class SimpleFilterSample {
 
-    public static void main(String[] args) throws InterruptedException, SiddhiParserException {
+    public static void main(String[] args) throws InterruptedException {
 
         // Create Siddhi Manager
-        SiddhiManager siddhiManager = new SiddhiManager();
+        SiddhiConfiguration siddhiConfiguration = new SiddhiConfiguration();
 
-        siddhiManager.defineStream("define stream cseEventStream ( symbol string, price float, volume int )");
-        siddhiManager.addQuery("from  cseEventStream [ price >= 50 ] " +
-                               "select symbol, price "+
-                               "insert into StockQuote ;");
 
-        siddhiManager.addCallback("StockQuote", new StreamCallback() {
+        List<Class> list = new ArrayList<Class>();
+        list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+
+        siddhiConfiguration.setSiddhiExtensions(list);
+        SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
+
+        InputHandler inputHandler = siddhiManager.defineStream(
+                QueryFactory.createStreamDefinition().name("cseEventStream").attribute("symbol", Attribute.Type.STRING).
+                        attribute("price1", Attribute.Type.FLOAT).attribute("price2", Attribute.Type.FLOAT)
+                        .attribute("volume", Attribute.Type.LONG).attribute("quantity", Attribute.Type.INT));
+        siddhiManager.defineFunction(
+                "define stream concat[Scala] return string {\n" +
+                "  var concatenatedString = \"\"\n" +
+                "  for(i <- 0 until data.length){\n" +
+                "  concatenatedString += data(i).toString\n" +
+                "  }\n" +
+                "  concatenatedString\n" +
+                "}");
+
+        String queryReference = siddhiManager.addQuery("from cseEventStream" +
+                " select symbol, concat(symbol,' ',price2) as price,quantity;");
+
+        siddhiManager.addCallback(queryReference, new QueryCallback() {
             @Override
-            public void receive(Event[] events) {
-                EventPrinter.print(events);
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
             }
         });
-        InputHandler inputHandler = siddhiManager.getInputHandler("cseEventStream");
-        inputHandler.send(new Object[]{"IBM", 75.6f, 100});
-        inputHandler.send(new Object[]{"GOOG", 50f, 100});
-        inputHandler.send(new Object[]{"IBM", 76.6f, 100});
-        inputHandler.send(new Object[]{"WSO2", 45.6f, 100});
-        Thread.sleep(500);
 
+        inputHandler.send(new Object[]{"WSO2", 50f, 60f, 60l, 6});
         siddhiManager.shutdown();
     }
 }

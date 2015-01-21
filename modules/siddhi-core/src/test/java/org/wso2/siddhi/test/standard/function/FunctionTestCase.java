@@ -15,7 +15,7 @@
 * specific language governing permissions and limitations
 * under the License.
 */
-package org.wso2.siddhi.test.standard.fuction;
+package org.wso2.siddhi.test.standard.function;
 
 import org.apache.log4j.Logger;
 import org.junit.Assert;

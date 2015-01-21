@@ -20,6 +20,7 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.wso2.siddhi.query.api.ExecutionPlan;
+import org.wso2.siddhi.query.api.definition.FunctionDefinition;
 import org.wso2.siddhi.query.api.definition.StreamDefinition;
 import org.wso2.siddhi.query.api.definition.TableDefinition;
 import org.wso2.siddhi.query.api.definition.partition.PartitionDefinition;
@@ -123,6 +124,8 @@ public class SiddhiCompiler {
         }
     }
 
+
+
     public static Query parseQuery(String source) throws SiddhiParserException {
         try {
             SiddhiQLGrammarLexer lexer = new SiddhiQLGrammarLexer();
@@ -137,6 +140,25 @@ public class SiddhiCompiler {
             nodes.setTokenStream(tokens);
             SiddhiQLGrammarWalker walker = new SiddhiQLGrammarWalker(nodes);
             return walker.queryFinal();
+        } catch (Throwable e) {
+            throw new SiddhiParserException(e.getMessage(), e);
+        }
+    }
+
+    public static FunctionDefinition parseFunctionDefinition(String source) throws SiddhiParserException {
+        try {
+            SiddhiQLGrammarLexer lexer = new SiddhiQLGrammarLexer();
+            lexer.setCharStream(new ANTLRStringStream(source));
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            SiddhiQLGrammarParser parser = new SiddhiQLGrammarParser(tokens);
+
+            SiddhiQLGrammarParser.definitionFunction_return r = parser.definitionFunction();
+            CommonTree t = (CommonTree) r.getTree();
+
+            CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
+            nodes.setTokenStream(tokens);
+            SiddhiQLGrammarWalker walker = new SiddhiQLGrammarWalker(nodes);
+            return walker.definitionFunctionFinal();
         } catch (Throwable e) {
             throw new SiddhiParserException(e.getMessage(), e);
         }

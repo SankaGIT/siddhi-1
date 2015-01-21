@@ -19,6 +19,8 @@ package org.wso2.siddhi.core.util.parser;
 
 import org.wso2.siddhi.core.config.SiddhiContext;
 import org.wso2.siddhi.core.exception.OperationNotSupportedException;
+import org.wso2.siddhi.core.exception.QueryCreationException;
+import org.wso2.siddhi.core.exception.SiddhiFunctionNotFoundException;
 import org.wso2.siddhi.core.executor.conditon.AndConditionExecutor;
 import org.wso2.siddhi.core.executor.conditon.BooleanConditionExecutor;
 import org.wso2.siddhi.core.executor.conditon.ConditionExecutor;
@@ -50,6 +52,7 @@ import org.wso2.siddhi.core.executor.expression.multiply.MultiplyExpressionExecu
 import org.wso2.siddhi.core.executor.expression.multiply.MultiplyExpressionExecutorFloat;
 import org.wso2.siddhi.core.executor.expression.multiply.MultiplyExpressionExecutorInt;
 import org.wso2.siddhi.core.executor.expression.multiply.MultiplyExpressionExecutorLong;
+import org.wso2.siddhi.core.executor.function.ScriptFunctionExecutor;
 import org.wso2.siddhi.core.extension.holder.ExecutorExtensionHolder;
 import org.wso2.siddhi.core.table.EventTable;
 import org.wso2.siddhi.core.util.SiddhiClassLoader;
@@ -279,7 +282,21 @@ public class ExecutorParser {
             for (Expression innerExpression : ((FunctionExpression) expression).getParameters()) {
                 innerExpressionExecutors.add(parseExpression(innerExpression, queryEventSourceList, currentStreamReference, processInStreamDefinition, siddhiContext));
             }
-            FunctionExecutor expressionExecutor= (FunctionExecutor) SiddhiClassLoader.loadSiddhiImplementation(((FunctionExpression) expression).getFunction(), FunctionExecutor.class);
+            FunctionExecutor expressionExecutor = null;
+            if(siddhiContext.isFunctionExist(((FunctionExpression) expression).getFunction())) {
+                expressionExecutor = new ScriptFunctionExecutor(((FunctionExpression) expression).getFunction());
+
+            } else {
+                try {
+                    expressionExecutor= (FunctionExecutor) SiddhiClassLoader.loadSiddhiImplementation(((FunctionExpression) expression).getFunction(), FunctionExecutor.class);
+                } catch (QueryCreationException e) {
+                    if (e.isClassLoadingIssue()) {
+                        throw new SiddhiFunctionNotFoundException("The function " + ((FunctionExpression) expression).getFunction() + " has not defined.");
+                    } else {
+                        throw new QueryCreationException(e.getMessage(), e);
+                    }
+                }
+            }
             siddhiContext.addEternalReferencedHolder(expressionExecutor);
             expressionExecutor.setSiddhiContext(siddhiContext);
             expressionExecutor.setAttributeExpressionExecutors(innerExpressionExecutors);

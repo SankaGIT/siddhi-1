@@ -27,6 +27,7 @@ tokens {
   JOIN; 
   STREAM;
   STREAM_DEFINITION;
+  FUNCTION_DEFINITION;
   TABLE_DEFINITION;
   TABLE;
   QUERY;
@@ -92,8 +93,24 @@ tokens {
 }
 
 executionPlan
-	:(definitionPartition|definitionStream|definitionTable|query) (';' (definitionPartition| definitionStream|definitionTable|query))* ';'? EOF  -> (^(PARTITION_DEFINITION definitionPartition))* (^(STREAM_DEFINITION definitionStream))*  (^(TABLE_DEFINITION definitionTable))*  ( query)*
-	; 
+	:(definitionPartition|definitionStream|definitionTable|query|definitionFunction) (';' (definitionPartition| definitionStream|definitionTable|query|definitionFunction))* ';'? EOF  -> (^(PARTITION_DEFINITION definitionPartition))* (^(STREAM_DEFINITION definitionStream))*  (^(TABLE_DEFINITION definitionTable))* (^(FUNCTION_DEFINITION definitionFunction))*  ( query)*
+	;
+
+definitionFunction
+	: 'define' 'function' functionName '[' language ']' 'return' type script ->  ^(functionName language type script)
+	;
+
+functionName
+	: id
+	;
+
+language
+	: id
+	;
+
+script
+	: SCRIPT
+	;
 
 definitionStreamFinal
     : definitionStream ';'? EOF -> definitionStream
@@ -148,7 +165,7 @@ outputTypeCondition
 inputStream
 	:'from' ( sequenceFullStream -> ^(SEQUENCE_FULL sequenceFullStream)
 		| patternFullStream ->  ^(PATTERN_FULL  patternFullStream )
-		| joinStream -> ^(JOIN joinStream) 
+		| joinStream -> ^(JOIN joinStream)
 		| windowStream -> windowStream
 		| basicStream  -> basicStream
 		)
@@ -585,7 +602,7 @@ millisecond :  {input.LT(1).getText().equals("millisecond")}? ID ;
 STRING_VAL
 	:'\'' ( ~('\u0000'..'\u001f' | '\''| '\"' ) )* '\'' {setText(getText().substring(1, getText().length()-1));}
 	|'"' ( ~('\u0000'..'\u001f'  |'\"') )* '"'          {setText(getText().substring(1, getText().length()-1));}
-	;	
+	;
 
 fragment NUM: '0'..'9'+;
 
@@ -601,3 +618,7 @@ COMMENT
 LINE_COMMENT
     : '//' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
     ;
+
+SCRIPT
+	:   '{' ('\u0020'..'\u007e' | ~( '{' | '}' ) )* '}' {setText(getText().substring(1, getText().length()-1));}
+	;

@@ -19,6 +19,7 @@ package org.wso2.siddhi.core.config;
 
 import com.hazelcast.core.HazelcastInstance;
 import org.wso2.siddhi.core.extension.EternalReferencedHolder;
+import org.wso2.siddhi.core.function.EvalScript;
 import org.wso2.siddhi.core.persistence.PersistenceService;
 import org.wso2.siddhi.core.snapshot.SnapshotService;
 import org.wso2.siddhi.core.snapshot.ThreadBarrier;
@@ -28,7 +29,9 @@ import org.wso2.siddhi.core.util.generator.GlobalIndexGenerator;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -51,6 +54,8 @@ public class SiddhiContext {
     private List<EternalReferencedHolder> eternalReferencedHolders;
     private ConcurrentHashMap<String, DataSource> siddhiDataSources;
     private EventMonitorService eventMonitorService;
+    private Map<String, EvalScript> scriptFunctionMap;
+
 
     public enum ProcessingState {ENABLE_INTERNAL,ENABLE_EXTERNAL,DISABLED}
 
@@ -60,6 +65,7 @@ public class SiddhiContext {
         this.elementIdGenerator = new ElementIdGenerator(queryPlanIdentifier);
         this.siddhiDataSources = new ConcurrentHashMap<String, DataSource>();
         this.eternalReferencedHolders = new ArrayList<EternalReferencedHolder>();
+        this.scriptFunctionMap = new HashMap<String, EvalScript>();
     }
 
     public boolean isAsyncProcessing() {
@@ -183,4 +189,15 @@ public class SiddhiContext {
         return eternalReferencedHolders;
     }
 
+    public EvalScript getEvalScript(String name) {
+        return scriptFunctionMap.get(name);
+    }
+
+    public boolean isFunctionExist(String name) {
+         return scriptFunctionMap.get(name) != null;
+    }
+
+    public Map<String, EvalScript> getScriptFunctionMap() {
+        return scriptFunctionMap;
+    }
 }

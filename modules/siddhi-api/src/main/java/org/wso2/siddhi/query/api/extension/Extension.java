@@ -19,7 +19,7 @@ package org.wso2.siddhi.query.api.extension;
 
 import java.io.Serializable;
 
-public interface Extension extends Serializable{
+public interface Extension extends Serializable {
 
 
     public String getNamespace() ;

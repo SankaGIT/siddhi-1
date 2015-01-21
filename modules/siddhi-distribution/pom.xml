@@ -121,6 +121,54 @@
                                     <outputDirectory>${project.basedir}/../samples/lib
                                     </outputDirectory>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.wso2.siddhi</groupId>
+                                    <artifactId>eval-script</artifactId>
+                                    <version>${project.version}</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.basedir}/../samples/lib
+                                    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.scala-lang</groupId>
+                                    <artifactId>scala-reflect</artifactId>
+                                    <version>2.11.1</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.basedir}/../samples/lib
+                                    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.googlecode.scalascriptengine</groupId>
+                                    <artifactId>scalascriptengine_2.11</artifactId>
+                                    <version>1.3.10</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.basedir}/../samples/lib
+                                    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.scala-lang</groupId>
+                                    <artifactId>scala-library</artifactId>
+                                    <version>2.11.1</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.basedir}/../samples/lib
+                                    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.slf4j</groupId>
+                                    <artifactId>slf4j-simple</artifactId>
+                                    <version>1.6.2</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.basedir}/../samples/lib
+                                    </outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>joda-time</groupId>
+                                    <artifactId>joda-time</artifactId>
+                                    <version>2.3</version>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.basedir}/../samples/lib
+                                    </outputDirectory>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>

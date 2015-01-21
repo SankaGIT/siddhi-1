@@ -23,9 +23,7 @@ import com.hazelcast.core.HazelcastInstance;
 import org.apache.log4j.Logger;
 import org.wso2.siddhi.core.config.SiddhiConfiguration;
 import org.wso2.siddhi.core.config.SiddhiContext;
-import org.wso2.siddhi.core.exception.DifferentDefinitionAlreadyExistException;
-import org.wso2.siddhi.core.exception.OperationNotSupportedException;
-import org.wso2.siddhi.core.exception.QueryNotExistException;
+import org.wso2.siddhi.core.exception.*;
 import org.wso2.siddhi.core.extension.EternalReferencedHolder;
 import org.wso2.siddhi.core.persistence.PersistenceService;
 import org.wso2.siddhi.core.snapshot.SnapshotService;
@@ -46,8 +44,10 @@ import org.wso2.siddhi.core.tracer.EventMonitorService;
 import org.wso2.siddhi.core.util.ExecutionPlanReference;
 import org.wso2.siddhi.core.util.SiddhiThreadFactory;
 import org.wso2.siddhi.core.util.generator.GlobalIndexGenerator;
+import org.wso2.siddhi.core.util.parser.FunctionParser;
 import org.wso2.siddhi.query.api.ExecutionPlan;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
+import org.wso2.siddhi.query.api.definition.FunctionDefinition;
 import org.wso2.siddhi.query.api.definition.StreamDefinition;
 import org.wso2.siddhi.query.api.definition.TableDefinition;
 import org.wso2.siddhi.query.api.definition.partition.PartitionDefinition;
@@ -55,6 +55,7 @@ import org.wso2.siddhi.query.api.query.Query;
 import org.wso2.siddhi.query.compiler.SiddhiCompiler;
 import org.wso2.siddhi.query.compiler.exception.SiddhiParserException;
 
+import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -252,6 +253,15 @@ public class SiddhiManager {
         definePartition(SiddhiCompiler.parsePartitionDefinition(partitionDefinition));
     }
 
+    public void defineFunction(String functionDefinition) {
+        defineFunction(SiddhiCompiler.parseFunctionDefinition(functionDefinition));
+    }
+
+    public void defineFunction(FunctionDefinition functionDefinition) {
+        FunctionParser.addFunction(siddhiContext, functionDefinition);
+
+    }
+
     public void removePartition(String partitionId) {
         PartitionDefinition partitionDefinition = partitionDefinitionMap.get(partitionId);
         if (partitionDefinition != null) {
@@ -308,6 +318,8 @@ public class SiddhiManager {
                 defineTable((TableDefinition) plan);
             } else if (plan instanceof PartitionDefinition) {
                 definePartition((PartitionDefinition) plan);
+            } else if (plan instanceof FunctionDefinition) {
+                defineFunction((FunctionDefinition) plan);
             } else {
                 throw new OperationNotSupportedException(plan.getClass().getName() + " is not supported as an execution plan element ");
             }

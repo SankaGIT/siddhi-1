@@ -18,6 +18,7 @@
 package org.wso2.siddhi.query.api;
 
 import org.wso2.siddhi.query.api.condition.Condition;
+import org.wso2.siddhi.query.api.definition.FunctionDefinition;
 import org.wso2.siddhi.query.api.definition.partition.PartitionDefinition;
 import org.wso2.siddhi.query.api.definition.StreamDefinition;
 import org.wso2.siddhi.query.api.definition.TableDefinition;
@@ -108,4 +109,6 @@ public abstract class QueryFactory {
 	public static PartitionDefinition createPartitionDefinition() {
 	    return new PartitionDefinition();
     }
+
+    public static FunctionDefinition createFunctionDefinition() { return new FunctionDefinition(); }
 }

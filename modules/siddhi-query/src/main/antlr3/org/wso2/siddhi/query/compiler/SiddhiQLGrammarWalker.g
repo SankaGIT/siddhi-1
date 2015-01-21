@@ -16,6 +16,7 @@ options {
     import org.wso2.siddhi.query.api.condition.FunctionCondition;
     import org.wso2.siddhi.query.api.definition.Attribute;
     import org.wso2.siddhi.query.api.definition.StreamDefinition;
+    import org.wso2.siddhi.query.api.definition.FunctionDefinition;
     import org.wso2.siddhi.query.api.definition.TableDefinition;
     import org.wso2.siddhi.query.api.definition.partition.PartitionDefinition;
     import org.wso2.siddhi.query.api.definition.partition.PartitionType;
@@ -70,8 +71,36 @@ executionPlan returns [List<ExecutionPlan> executionPlanList]
 	: (^(PARTITION_DEFINITION definitionPartition {$executionPlanList.add($definitionPartition.partitionDefinition);}))*
 	  (^(STREAM_DEFINITION definitionStream {$executionPlanList.add($definitionStream.streamDefinition);}))*
 	  (^(TABLE_DEFINITION definitionTable {$executionPlanList.add($definitionTable.tableDefinition);}))*
+	  (^(FUNCTION_DEFINITION definitionFunction { $executionPlanList.add($definitionFunction.functionDefinition);}))*
 	  (query {$executionPlanList.add($query.query);})*
-	; 
+	;
+
+definitionFunctionFinal returns [FunctionDefinition definitionFunctionFinal]
+	: definitionFunction { $definitionFunctionFinal=$definitionFunction.functionDefinition; }
+	;
+
+definitionFunction returns [FunctionDefinition functionDefinition]
+	@init{
+            $functionDefinition = QueryFactory.createFunctionDefinition();
+    }
+	: ^(
+		functionName { $functionDefinition.functionID($functionName.value); }
+		language { $functionDefinition.language($language.value); }
+		type { $functionDefinition.type($type.type); }
+		script { $functionDefinition.body($script.value); } )
+	;
+
+functionName returns [String value]
+	: id {$value=$id.value;}
+	;
+
+language returns [String value]
+	: id {$value=$id.value;}
+	;
+
+script returns [String value]
+	: SCRIPT {$value=$SCRIPT.text;}
+	;
 
 definitionStreamFinal returns [StreamDefinition definitionStreamFinal ]
     : definitionStream  {$definitionStreamFinal=$definitionStream.streamDefinition;}

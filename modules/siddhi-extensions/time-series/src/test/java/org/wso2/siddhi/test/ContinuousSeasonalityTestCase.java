@@ -14,9 +14,6 @@ import org.wso2.siddhi.core.util.EventPrinter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by seshika on 4/25/14.
- */
 public class ContinuousSeasonalityTestCase
 {
     static final Logger log = Logger.getLogger(SimpleRegressionTestCase.class);

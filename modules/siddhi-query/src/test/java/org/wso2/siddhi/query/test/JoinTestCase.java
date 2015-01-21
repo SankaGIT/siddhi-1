@@ -1,4 +1,4 @@
-package org.wso2.siddhi.query.test;
+/*package org.wso2.siddhi.query.test;
 
 import junit.framework.Assert;
 import org.antlr.runtime.RecognitionException;
@@ -54,4 +54,4 @@ public class JoinTestCase {
 
     }
 
-}
+}*/
