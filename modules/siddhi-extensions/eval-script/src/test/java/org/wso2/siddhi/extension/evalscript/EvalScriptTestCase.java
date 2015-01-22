@@ -39,6 +39,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -93,6 +94,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -136,6 +138,57 @@ public class EvalScriptTestCase {
         siddhiManager.shutdown();
     }
 
+    @Test
+    public void testEvalRConcat() throws InterruptedException {
+
+        log.info("TestEvalRConcat");
+
+        SiddhiConfiguration siddhiConfiguration = new SiddhiConfiguration();
+
+
+        List<Class> list = new ArrayList<Class>();
+        list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
+
+        siddhiConfiguration.setSiddhiExtensions(list);
+        SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
+
+        InputHandler inputHandler = siddhiManager.defineStream(
+                QueryFactory.createStreamDefinition().name("cseEventStream").attribute("symbol", Attribute.Type.STRING).
+                        attribute("price1", Attribute.Type.FLOAT).attribute("price2", Attribute.Type.FLOAT)
+                        .attribute("volume", Attribute.Type.LONG).attribute("quantity", Attribute.Type.INT));
+        siddhiManager.defineFunction(
+                "define function concat[R] return string {\n" +
+                "return(paste(data, collapse=\"\"));  \n" +
+                "}");
+
+        String queryReference = siddhiManager.addQuery("from cseEventStream" +
+                " select symbol, concat(symbol,' ',price2) as price,quantity;");
+
+        siddhiManager.addCallback(queryReference, new QueryCallback() {
+            @Override
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+                isReceived[0] = true;
+                value[0] = inEvents[0].getData1();
+            }
+        });
+
+        isReceived[0] = false;
+        value[0] = null;
+
+        inputHandler.send(new Object[]{"WSO2", 50f, 60f, 60l, 6});
+
+        if(isReceived[0]) {
+            Assert.assertEquals("WSO2 60", value[0]);
+        } else {
+            throw new RuntimeException("The event has not been received");
+        }
+
+        siddhiManager.shutdown();
+    }
+
     @Test(expected= FunctionInitializationException.class)
     public void testScalaCompilationFailure() throws InterruptedException {
 
@@ -147,6 +200,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -173,6 +227,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -198,6 +253,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -230,6 +286,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -367,6 +424,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -418,6 +476,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -442,6 +501,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -476,6 +536,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -501,6 +562,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -526,6 +588,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -551,6 +614,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -576,6 +640,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -601,6 +666,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -626,6 +692,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
@@ -651,6 +718,7 @@ public class EvalScriptTestCase {
         List<Class> list = new ArrayList<Class>();
         list.add(org.wso2.siddhi.extension.evalscript.EvalJavaScript.class);
         list.add(org.wso2.siddhi.extension.evalscript.EvalScala.class);
+        list.add(org.wso2.siddhi.extension.evalscript.EvalR.class);
 
         siddhiConfiguration.setSiddhiExtensions(list);
         SiddhiManager siddhiManager = new SiddhiManager(siddhiConfiguration);
