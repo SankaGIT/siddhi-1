@@ -1,8 +1,11 @@
 package org.wso2.siddhi.extension.evalscript;
 
 import org.apache.log4j.Logger;
+import org.rosuda.REngine.RList;
 import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPExpressionVector;
 import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.REXPWrapper;
 import org.rosuda.REngine.REngine;
 import org.rosuda.REngine.REngineException;
 import org.rosuda.REngine.JRI.JRIEngine;
@@ -20,6 +23,7 @@ public class EvalR implements EvalScript {
 	REngine re;
 	static Logger log = Logger.getLogger("RTransformProcessor");
 	REXP env;
+	REXP func;
 	private String functionName;
 	private Attribute.Type returnType;
 
@@ -41,6 +45,7 @@ public class EvalR implements EvalScript {
 		try {
 			// Define the function in R environment env
 			re.parseAndEval(name + " <- function(data) { " + body + " }", env, false);
+			func = re.parse(name + "(data)", false);
 		} catch (REngineException e) {
 			throw new FunctionInitializationException("Error while declaring function in R", e);
 		} catch (REXPMismatchException e) {
@@ -52,20 +57,14 @@ public class EvalR implements EvalScript {
 	@Override
 	public Object eval(String name, Object[] arg) {
 		REXP out;
-		StringBuilder data = new StringBuilder("data <- c(");
+		REXP[] arr = new REXP[arg.length];
 		for (int i = 0; i < arg.length; i++) {
-			if (arg[i] instanceof String)
-				data.append("\"").append(arg[i].toString()).append("\"");
-			else
-				data.append(arg[i].toString());
-			if (i < arg.length - 1) {
-				data.append(", ");
-			}
+			arr[i] = REXPWrapper.wrap(arg[i]);
 		}
-		data.append(");\n");
-		data.append(name).append("(data)");
+
 		try {
-			out = re.parseAndEval(data.toString(), env, true);
+			re.assign("data", new REXPExpressionVector(new RList(arr)), env);
+			out = re.eval(func, env, true);
 			switch (returnType) {
 			case BOOL:
 				if (out.isLogical()) {
@@ -104,12 +103,10 @@ public class EvalR implements EvalScript {
 			}
 			throw new FunctionEvaluationException("Wrong return type detected.");
 		} catch (REngineException e) {
-			e.printStackTrace();
+			throw new FunctionEvaluationException("Error in return value from R.", e);
 		} catch (REXPMismatchException e) {
-			e.printStackTrace();
+			throw new FunctionEvaluationException("Error in return value from R.", e);
 		}
-
-		return null;
 	}
 
 	@Override
