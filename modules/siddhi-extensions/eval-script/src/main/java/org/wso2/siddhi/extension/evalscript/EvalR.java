@@ -1,13 +1,10 @@
 package org.wso2.siddhi.extension.evalscript;
 
-import org.apache.log4j.Logger;
-import org.rosuda.REngine.RList;
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPExpressionVector;
-import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REXPWrapper;
 import org.rosuda.REngine.REngine;
-import org.rosuda.REngine.REngineException;
+import org.rosuda.REngine.RList;
 import org.rosuda.REngine.JRI.JRIEngine;
 import org.wso2.siddhi.core.function.EvalScript;
 import org.wso2.siddhi.extension.evalscript.exceptions.FunctionEvaluationException;
@@ -20,10 +17,9 @@ import org.wso2.siddhi.query.api.extension.annotation.SiddhiExtension;
 @SiddhiExtension(namespace = "evalscript", function = "r")
 public class EvalR implements EvalScript {
 
-	REngine re;
-	static Logger log = Logger.getLogger("RTransformProcessor");
-	REXP env;
-	REXP func;
+	private REngine rEngine;
+	private REXP env;
+	private REXP functionCall;
 	private String functionName;
 	private Attribute.Type returnType;
 
@@ -32,89 +28,84 @@ public class EvalR implements EvalScript {
 		this.functionName = name;
 		try {
 			// Get the JRIEngine or create one
-			re = JRIEngine.createEngine();
+			rEngine = JRIEngine.createEngine();
 			// Create a new R environment
-			env = re.newEnvironment(null, true);
+			env = rEngine.newEnvironment(null, true);
 
-		} catch (REngineException e) {
-			throw new FunctionInitializationException("Error while initializing the REngine", e);
-		} catch (REXPMismatchException e) {
+		} catch (Exception e) {
 			throw new FunctionInitializationException("Error while initializing the REngine", e);
 		}
 
 		try {
 			// Define the function in R environment env
-			re.parseAndEval(name + " <- function(data) { " + body + " }", env, false);
-			func = re.parse(name + "(data)", false);
-		} catch (REngineException e) {
-			throw new FunctionInitializationException("Error while declaring function in R", e);
-		} catch (REXPMismatchException e) {
-			throw new FunctionInitializationException("Error while declaring function in R", e);
+			rEngine.parseAndEval(name + " <- function(data) { " + body + " }",
+					env, false);
+			// Parse the function call in R
+			functionCall = rEngine.parse(name + "(data)", false);
+		} catch (Exception e) {
+			throw new FunctionInitializationException("Compilation failure of the R function " + name, e);
 		}
-
 	}
 
 	@Override
 	public Object eval(String name, Object[] arg) {
-		REXP out;
-		REXP[] arr = new REXP[arg.length];
+		REXP[] data = new REXP[arg.length];
 		for (int i = 0; i < arg.length; i++) {
-			arr[i] = REXPWrapper.wrap(arg[i]);
+			data[i] = REXPWrapper.wrap(arg[i]);
 		}
 
 		try {
-			re.assign("data", new REXPExpressionVector(new RList(arr)), env);
-			out = re.eval(func, env, true);
+			// Send the data to R and assign it to symbol 'data'
+			rEngine.assign("data", new REXPExpressionVector(new RList(data)), env);
+			// Execute the function call
+			REXP result = rEngine.eval(functionCall, env, true);
 			switch (returnType) {
-			case BOOL:
-				if (out.isLogical()) {
-					return out.asInteger() == 1;
-				}
-				break;
-			case INT:
-				if (out.isInteger()) {
-					return out.asInteger();
-				}
-				break;
-			case LONG:
-				if (out.isInteger()) {
-					return (Long.valueOf(out.asInteger()));
-				}
-				break;
-			case STRING:
-				if (out.isString()) {
-					return out.asString();
-				}
-				break;
-			case FLOAT:
-				if (out.isNumeric()) {
-					return ((Double) out.asDouble()).floatValue();
-				}
-				break;
-			case DOUBLE:
-				if (out.isNumeric()) {
-					return ((Double) out.asDouble());
-				}
-				break;
-			default:
-				throw new FunctionEvaluationException(
-						"Specified return type not supported.");
-
+				case BOOL:
+					if (result.isLogical()) {
+						return result.asInteger() == 1;
+					}
+					break;
+				case INT:
+					if (result.isInteger()) {
+						return result.asInteger();
+					}
+					break;
+				case LONG:
+					if (result.isNumeric()) {
+						return ((long) result.asDouble());
+					}
+					break;
+				case FLOAT:
+					if (result.isNumeric()) {
+						return ((Double) result.asDouble()).floatValue();
+					}
+					break;
+				case DOUBLE:
+					if (result.isNumeric()) {
+						return ((Double) result.asDouble());
+					}
+					break;
+				case STRING:
+					if (result.isString()) {
+						return result.asString();
+					}
+					break;
+				default:
+					break;
 			}
-			throw new FunctionEvaluationException("Wrong return type detected.");
-		} catch (REngineException e) {
-			throw new FunctionEvaluationException("Error in return value from R.", e);
-		} catch (REXPMismatchException e) {
-			throw new FunctionEvaluationException("Error in return value from R.", e);
+			throw new FunctionEvaluationException(
+					"Wrong return type detected. Expected: " + returnType
+					+ " found: " + result.asNativeJavaObject().getClass().getCanonicalName());
+
+		} catch (Exception e) {
+			throw new FunctionEvaluationException("Error evaluating R function " + functionName, e);
 		}
 	}
 
 	@Override
 	public void setReturnType(Type returnType) {
 		if (returnType == null) {
-			throw new FunctionReturnTypeNotPresent(
-					"Cannot find the return type of the function "
-							+ functionName);
+			throw new FunctionReturnTypeNotPresent("Cannot find the return type of the function " + functionName);
 		}
 		this.returnType = returnType;
 	}
@@ -123,5 +114,4 @@ public class EvalR implements EvalScript {
 	public Type getReturnType() {
 		return returnType;
 	}
-
 }
